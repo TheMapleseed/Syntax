@@ -12,6 +12,8 @@ It provides:
 
 No external crates are used.
 
+Licensed under **GPL-3.0-only**. See ``LICENSE``.
+
 
 Why this exists
 ---------------
