@@ -1,4 +1,4 @@
-pub mod base64url;
+mod base64url;
 pub mod concurrent;
 pub mod pipeline;
 pub mod validation;

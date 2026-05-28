@@ -35,6 +35,21 @@ Native behavior is always active in public APIs:
 
 This excludes control bytes and common interpreter separators from the wire representation.
 
+Important boundary notes
+------------------------
+
+The project explicitly documents these constraints:
+
+- There is no hard input-size limit in the library.
+- There is native rate limiting: at most 500 characters per second, shared by
+  ``encode_packet()`` and ``decode_packet()`` calls.
+- Wire safety is not the same thing as sink safety. After decode, callers must
+  still use sink-specific protections (parameterized SQL, shell argv arrays,
+  proper escaping/encoding per sink).
+- The current implementation is ASCII-only and rejects non-ASCII input.
+- Printable ASCII is enforced for plaintext payloads (control bytes like
+  ``\n``, ``\r``, ``\t``, and ``\0`` are rejected).
+
 
 Blank-space system (collision-proof)
 ------------------------------------
@@ -119,10 +134,13 @@ Error handling
 Primary error types:
 
 - ``PipelineError::NonAsciiInput``
+- ``PipelineError::ControlByte { index, byte }``
+- ``PipelineError::RateLimited { allowed_per_second, attempted_chars }``
 - ``PipelineError::InvalidEscapeSequence``
 - ``PipelineError::Validation(..)``
 - ``PipelineError::Decode(..)``
 - ``PipelineError::Utf8``
+- ``PipelineError::InternalFailure(..)``
 
 
 Development
@@ -140,3 +158,4 @@ Current test suite covers:
 - Wire format validation.
 - Collision-proof blank-space handling.
 - Concurrent batch ordering and decode integrity.
+- Rejection of plaintext control characters.

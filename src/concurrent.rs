@@ -38,7 +38,8 @@ impl ConcurrentPipeline {
         }
 
         let worker_count = self.config.workers.max(1).min(total);
-        let (job_tx, job_rx) = mpsc::channel::<(usize, String)>();
+        let job_buffer = worker_count.saturating_mul(2).max(1);
+        let (job_tx, job_rx) = mpsc::sync_channel::<(usize, String)>(job_buffer);
         let (result_tx, result_rx) = mpsc::channel::<(usize, Result<String, PipelineError>)>();
 
         let mut handles = Vec::with_capacity(worker_count);
@@ -104,8 +105,8 @@ impl ConcurrentPipeline {
         ordered
             .into_iter()
             .map(|entry| {
-                entry.unwrap_or(Err(PipelineError::Validation(
-                    crate::validation::ValidationError::EmptyInput,
+                entry.unwrap_or(Err(PipelineError::InternalFailure(
+                    "missing worker result",
                 )))
             })
             .collect()
